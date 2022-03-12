@@ -1,0 +1,6 @@
+#java api 地址
+https://docs.microsoft.com/zh-cn/exchange/client-developer/exchange-web-services/ews-client-design-overview-for-exchange
+#流式订阅通知 地址
+https://docs.microsoft.com/zh-cn/exchange/client-developer/exchange-web-services/how-to-stream-notifications-about-mailbox-events-by-using-ews-in-exchange#subscribe-to-and-get-streaming-notifications-by-using-the-ews-managed-api
+#日程地址
+https://docs.microsoft.com/zh-cn/exchange/client-developer/exchange-web-services/calendars-and-ews-in-exchange
