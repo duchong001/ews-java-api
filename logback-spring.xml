@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name"/>
+
+    <property name="log.path" value="${user.home}/app-logs"/>
+    <property name="encoding" value="UTF-8"/>
+
+    <!-- 保留的归档文件的最大数量 -->
+    <property name="max.history" value="7"/>
+    <!-- 控制所有归档日志文件的总大小 -->
+    <property name="total.size.cap" value="50MB"/>
+
+    <!-- 控制台 appender -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>${encoding}</charset>
+        </encoder>
+    </appender>
+
+    <!--info级别的日志打印配置-->
+    <appender name="INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <File>${log.path}/${APP_NAME}-app.log</File>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.path}/${APP_NAME}-all-%d{yyyyMMdd}.log</fileNamePattern>
+            <maxHistory>${max.history}</maxHistory>
+            <totalSizeCap>${total.size.cap}</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %p [%logger{36}.%M\(\):%L] - %m%n</pattern>
+            <charset>${encoding}</charset>
+        </encoder>
+    </appender>
+
+    <logger name="com.comac.cmos.mapper" level="DEBUG"/>
+    <logger name="org.mybatis" level="DEBUG" additivity="false"/>
+    <logger name="com.alibaba.nacos.client.config.impl" level="WARN"/>
+    <logger name="com.xxl.sso.core.filter.XxlSsoWebFilter" level="WARN"/>
+
+    <root level="INFO">
+        <appender-ref ref="INFO"/>
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+</configuration>
