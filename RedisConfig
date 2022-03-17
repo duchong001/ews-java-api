@@ -1,0 +1,71 @@
+package com.catlbattery.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
+import redis.clients.jedis.JedisPoolConfig;
+
+import java.io.Serializable;
+
+/**
+ * @author mamengmeng.pt
+ * @version $Id: RedisCalendarConfig.java, v 0.1 2022-01-20 9:00 mamengmeng.pt Exp $$
+ */
+@Configuration
+@ConfigurationProperties(prefix = "spring.redis-calendar")
+public class RedisConfig implements Serializable {
+
+    private static final long serialVersionUID = -2667423075033743232L;
+
+    @Value("${spring.redis-calendar.host}")
+    private String hostName;
+
+    @Value("${spring.redis-calendar.password}")
+    private String password;
+
+    @Value("${spring.redis-calendar.port}")
+    private String port;
+
+    @Value("${spring.redis-calendar.database}")
+    private String database;
+
+    @Value("${spring.redis-calendar.pool.max-active}")
+    private String maxActive;
+
+    @Value("${spring.redis-calendar.pool.max-idle}")
+    private String maxIdle;
+
+    @Value("${spring.redis-calendar.pool.min-idle}")
+    private String minIdle;
+
+    @Value("${spring.redis-calendar.pool.max-wait}")
+    private String maxWait;
+
+    @Bean("redisCalendar")
+    public RedisTemplate<String, Object> getRedisTemplate() {
+        JedisConnectionFactory jedisFactory = new JedisConnectionFactory();
+        jedisFactory.setHostName(hostName);
+        jedisFactory.setPort(Integer.valueOf(port));
+        jedisFactory.setPassword(password);
+        jedisFactory.setDatabase(Integer.valueOf(database));
+        JedisPoolConfig poolConfig = new JedisPoolConfig(); // 进行连接池配置
+        poolConfig.setMaxTotal(Integer.valueOf(maxActive));
+        poolConfig.setMaxIdle(Integer.valueOf(maxIdle));
+        poolConfig.setMinIdle(Integer.valueOf(minIdle));
+        poolConfig.setMaxWaitMillis(Integer.valueOf(maxWait));
+        jedisFactory.setPoolConfig(poolConfig);
+        jedisFactory.afterPropertiesSet(); // 初始化连接池配置
+
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<String, Object>();
+        redisTemplate.setConnectionFactory(jedisFactory);
+        redisTemplate.setKeySerializer(new StringRedisSerializer()); // key的序列化类型
+        redisTemplate.setValueSerializer(new JdkSerializationRedisSerializer()); // value的序列化类型
+        return redisTemplate;
+    }
+
+}
