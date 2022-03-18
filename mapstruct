@@ -25,3 +25,15 @@ public interface UserConverter {
 //    @Mapping(target = "orders", ignore = true)
 //    BasePageResult<UserVO> convertToUserVoPage(IPage<User> userIPage);
 }
+
+<cola.components.version>4.0.1</cola.components.version>
+<dependency>
+	<groupId>com.alibaba.cola</groupId>
+	<artifactId>cola-component-exception</artifactId>
+	<version>${cola.components.version}</version>
+</dependency>
+<dependency>
+	<groupId>com.alibaba.cola</groupId>
+	<artifactId>cola-component-dto</artifactId>
+	<version>${cola.components.version}</version>
+</dependency>
