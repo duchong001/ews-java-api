@@ -1,0 +1,154 @@
+package com.alibaba.core.web.handler;
+
+import com.alibaba.cola.dto.Response;
+import com.alibaba.cola.exception.BizException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.validation.BindException;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+/**
+ * 统一的异常处理器
+ * @author DUCHONG
+ * @since 2022年2月22日10:54:51
+ */
+@Slf4j
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    /**
+     * 参数合法性校验异常
+     * @param exception
+     * @return
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public Response handleMethodArgumentNotValidException(MethodArgumentNotValidException exception){
+
+        Response exceptionInfo = getErrorInfo(exception);
+        log.error("参数校验异常---{}",exceptionInfo.getErrMessage());
+        return exceptionInfo;
+
+    }
+
+    /**
+     * 参数合法性校验异常-类型不匹配
+     * @param exception
+     * @return
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public Response handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException exception){
+
+        Response exceptionInfo = getErrorInfo(exception);
+        log.error("参数校验异常---{}",exceptionInfo.getErrMessage());
+        return exceptionInfo;
+
+    }
+    /**
+     * 参数绑定异常
+     * @param exception
+     * @return
+     */
+    @ExceptionHandler(value = BindException.class)
+    public Response handleBindException(BindException exception) {
+
+
+        Response exceptionInfo = getErrorInfo(exception);
+        log.error("参数校验异常---{}",exceptionInfo.getErrMessage());
+        return exceptionInfo;
+    }
+
+    /**
+     * 违反约束异常 单个参数使用
+     * @param exception
+     * @return
+     */
+    @ExceptionHandler(value = ConstraintViolationException.class)
+    public Response handleConstraintViolationException(ConstraintViolationException exception) {
+
+        Response exceptionInfo = getErrorInfo(exception);
+        log.error("参数校验异常---{}", exceptionInfo.getErrMessage());
+        return exceptionInfo;
+    }
+
+    /**
+     * 业务异常处理
+     * @param exception
+     * @return
+     */
+    @ExceptionHandler(value = BizException.class)
+    @ResponseStatus(HttpStatus.OK)
+    public Response handleBizException(BizException exception) {
+
+        Response exceptionInfo = getErrorInfo(exception);
+        log.error("业务异常---{}", exceptionInfo.getErrMessage());
+        return exceptionInfo;
+    }
+    /**
+     * 将List结果转换成json格式
+     * @param exception
+     * @return
+     */
+    public  Response getErrorInfo(Exception exception) {
+
+        if(exception instanceof BindException){
+            return convertBindingResultToJson(((BindException) exception).getBindingResult());
+        }
+        if(exception instanceof MethodArgumentNotValidException){
+            return convertBindingResultToJson(((MethodArgumentNotValidException) exception).getBindingResult());
+        }
+        if(exception instanceof ConstraintViolationException){
+            return convertSetToJson(((ConstraintViolationException) exception).getConstraintViolations());
+        }
+        if(exception instanceof MethodArgumentTypeMismatchException){
+            String msg= exception.getMessage();
+            return Response.buildFailure("500", msg );
+        }
+        if(exception instanceof BizException){
+            String msg= exception.getMessage();
+            return Response.buildFailure("500", msg );
+        }
+        //未定义的异常
+        return Response.buildFailure("500", "UNKNOWN EXCEPTION");
+
+    }
+
+    /**
+     * 将单个参数实体校验结果封装
+     * @param constraintViolations
+     * @return
+     */
+    public  Response convertSetToJson(Set<? extends ConstraintViolation> constraintViolations) {
+        List<String> list=new ArrayList<>();
+        for (ConstraintViolation violation : constraintViolations) {
+            list.add(violation.getMessage());
+        }
+        return  Response.buildFailure("500",list.stream().collect(Collectors.joining(",")));
+    }
+
+    /**
+     * 将实体对象的校验结果封装
+     * @param result
+     * @return
+     */
+    public Response convertBindingResultToJson(BindingResult result){
+
+        List<String> list=new ArrayList<>();
+        result.getFieldErrors().forEach(fieldError -> {
+            list.add(fieldError.getDefaultMessage());
+        });
+
+        return Response.buildFailure("500",list.stream().collect(Collectors.joining(",")));
+    }
+}
