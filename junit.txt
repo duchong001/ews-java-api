@@ -1,0 +1,156 @@
+单元测试
+https://www.cnblogs.com/xuyatao/p/8337087.html
+https://shanhy.blog.csdn.net/article/details/104395281
+https://zhuanlan.zhihu.com/p/43360749
+#下载地址：
+https://www.sonarqube.org/downloads/
+https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-5.3.zip
+https://github.com/xuhuisheng/sonar-l10n-zh/releases?page=4
+安装
+https://my.oschina.net/milletes/blog/761742
+
+
+#settings文件配置
+
+<pluginGroups>
+	<!-- SonarQube 插件 -->
+	<pluginGroup>org.sonarsource.scanner.maven</pluginGroup>
+  </pluginGroups>
+# 若报错则 注释掉
+pom里面加
+ <plugin>
+	<groupId>org.sonarsource.scanner.maven</groupId>
+	<artifactId>sonar-maven-plugin</artifactId>
+	<version>3.3.0.603</version>
+</plugin>
+  <profiles>
+	<!-- SonarQube 插件 -->
+	<profile>
+		<id>sonar</id>
+		<activation>
+			<activeByDefault>true</activeByDefault>
+		</activation>
+		<properties>
+			<!-- Optional URL to server. Default value is http://localhost:9000 -->
+			<sonar.host.url>
+			  http://192.168.10.88:9000
+			</sonar.host.url>
+		</properties>
+	</profile>
+  </profiles>
+
+# 该命令所经历阶段顺序：清理、设置jacoco代理、打包、执行测试用例、生成jacoco报告、推送报告到sonarqube
+
+mvn clean package
+mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent package org.jacoco:jacoco-maven-plugin:report sonar:sonar
+
+# 参考demo写法
+
+package com.example.controller;
+
+import com.example.entity.User;
+import com.example.execute.UserExe;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.context.WebApplicationContext;
+
+import java.util.List;
+import java.util.Objects;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+
+/**
+ * @author DUCHONG
+ * @date 2022-03-25 20:45
+ **/
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class UserControllerTest {
+
+    /**
+     * 方式一，通过注入service
+     */
+    @Autowired
+    private UserExe userExe;
+
+    /**
+     * 测试接口不需要service
+     */
+    private MockMvc mockMvc;
+
+    @Autowired
+    private WebApplicationContext context;
+
+    private ObjectMapper mapper = new ObjectMapper();
+
+
+    User user;
+
+    @Before
+    public void setUp() {
+
+        user=new User(2L,"sss",20,"1427222829@qq.com");
+        mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
+    }
+
+    @Test
+    @Transactional
+    public void testGetUser(){
+
+        User user = userExe.getUser(1L);
+
+        Assert.assertTrue("error", Objects.nonNull(user));
+
+    }
+
+    @Test
+    public void testMockGetUser() throws Exception {
+
+        String responseString = mockMvc.perform(MockMvcRequestBuilders.get("/user/get")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)  //数据的格式
+                .param("id","1L")
+        )
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andDo(print())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        System.out.println("--------返回的json = " + responseString);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/user/get").param("id","1L"))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andDo(print());
+//        ObjectMapper mapper = new ObjectMapper();
+//        ObjectWriter ow = mapper.writer().withDefaultPrettyPrinter();
+//        java.lang.String requestJson = ow.writeValueAsString(softInfo);
+//        String responseString = mockMvc.perform( post("/softs").contentType(MediaType.APPLICATION_JSON).content(requestJson)).andDo(print())
+//                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+//。。。设置值
+//    String requestJson = JSONObject.toJSONString(folderInfo);
+//        String responseString = mockMvc.perform( post("/softs").contentType(MediaType.APPLICATION_JSON).content(requestJson)).andDo(print())
+//                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+    }
+    @Test
+    public void testGetUserList(){
+
+        String userName="aaa";
+
+        List userList = userExe.getUserList(userName);
+
+        Assert.assertTrue("error", !CollectionUtils.isEmpty(userList));
+    }
+}
+
